@@ -1,2 +1,6 @@
 # nmmsims
-Simulations for N-mixture models
+An R package to simulate N-mixture models. 
+
+E.g.
+
+
