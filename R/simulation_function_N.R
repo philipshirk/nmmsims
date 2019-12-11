@@ -1,0 +1,276 @@
+#' Primary function for simulating & analysing datasets that are biased by over-dispersion in N
+#'
+#' This function is one of the master functions in this package. It simulates and
+#' analyzes a single dataset that is over-dispersed in true abundance, N. 
+#' To do this many times, use an apply function. It's currently simplified and 
+#' assumes constant abundance, detection, transect length, NO simulated goodness-of-fit
+#' metrics, simulates both point count and distance data, and analyses both datasets
+#' using both unmarked and optim.
+#'
+#' @param n_sites number of sites (transects)
+#' @param n_samps number of samples (replicates) per site
+#' @param lambda1  partial mean abundance at every site (single draw per site that stays constant across samples)
+#' @param lambda2  partial mean abundance at every replicate (new draw for every sample at every site)
+#' @param det_prob mean detection probability
+#' @param sigma detection parameter (meters). Just leave this blank and it will be calculated from det_prob
+#' @param W transect half-width (meters)
+#' @param reps_to_analyze the number of samples/replicates to analyze. If NA, it will analyse all replicates in the data.
+#' @param return What to return from the function call. Currently the only option is 'results'. May change this to only analyze simulated goodness-of-fit metrics.
+#' @param savefilename The simulated datasets and results ARE saved to file (currently not optional). This provides the path and filename for saving the intermediate steps in the analysis. 
+#'
+#' @return if everything works well, it returns a data.frame with the results of simulating a single dataset, analyzing it in 4 ways, and calculating randomized quantile residuals a la Knape et al. 2018. It also saves a list with the simulated dataset, dataframe of results (minus rqr residual info), and the actual rqr residuals to a savefilename inside the folder path 'working directory'/results/save_everything/savefilename. If there is an error, the function returns NA and also saves a file to 'working directory'/errors with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) Similarly, with a warning the function returns the results data.frame and also saves a file to 'working directory'/warnings with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) The user will have to go back and try to calculate rq-residuals from the output later. 
+#'
+#' @examples
+#' simulation_function_N()
+#'
+#' @import tidyverse
+#' 
+#' @export
+simulation_function_N = function(n_sites = 50, # number of sites
+                               n_samps = 6,  # number of samples per site
+                               lambda1 = 5, 
+                               lambda2 = 5, 
+                               det_prob = 0.42, # mean detection probability
+                               sigma   = NA, # detection parameter, calculated from det_prob
+                               W = 20,
+                               reps_to_analyze = 3, 
+                               # sampling_method = c('distance'),
+                               # analysis_method = c('optim'),
+                               # simulate_gof_pvals = T, 
+                               # simulate_gof_sims = 5,
+                               # simulate_gof_parallel = T, 
+                               return = 'results',
+                               savefilename = '') {
+   
+   out <- tryCatch(
+      {
+         # simulate the data
+         simdat <- sim_data_N(n_sites = n_sites, 
+                              n_samps = n_samps, 
+                              lambda1 = lambda1, 
+                              lambda2 = lambda2, 
+                              det_prob = det_prob, 
+                              sigma = sigma, 
+                              W = W)
+         
+         # analyze the data
+         resL <- analyse_data(simulated_data = simdat, 
+                              reps_to_analyze = reps_to_analyze, 
+                              sampling_method = c('distance', 'pointcount'),
+                              analysis_method = c('optim', 'unmarked'),
+                              simulate_gof_pvals = FALSE,
+                              return = return,
+                              W = W)
+         
+         # get the results data.frame
+         res <- resL[['df']]
+         
+         # calculate several types of residuals & save everything
+         {
+            # Calculate randomized-quantile residuals
+            # first, rename some parameters for convenience
+            {
+               K <- round(max(simdat$true_N)) * 10
+               lam_od <- res$lambda_est[which(res$LL_method == 'optim' & 
+                                                 res$sampling_method == 'Distance')]
+               lam_op <- res$lambda_est[which(res$LL_method == 'optim' & 
+                                                 res$sampling_method == 'pointcount')]
+               lam_ud <- res$lambda_est[which(res$LL_method == 'unmarked' & 
+                                                 res$sampling_method == 'Distance')]
+               lam_up <- res$lambda_est[which(res$LL_method == 'unmarked' & 
+                                                 res$sampling_method == 'pointcount')]
+               
+               sig_od <- res$sigma_est[which(res$LL_method == 'optim' & 
+                                                res$sampling_method == 'Distance')]
+               sig_op <- res$sigma_est[which(res$LL_method == 'optim' & 
+                                                res$sampling_method == 'pointcount')]
+               sig_ud <- res$sigma_est[which(res$LL_method == 'unmarked' & 
+                                                res$sampling_method == 'Distance')]
+               sig_up <- res$sigma_est[which(res$LL_method == 'unmarked' & 
+                                                res$sampling_method == 'pointcount')]
+               
+               detp_od <- res$det_p_est[which(res$LL_method == 'optim' & 
+                                                 res$sampling_method == 'Distance')]
+               detp_op <- res$det_p_est[which(res$LL_method == 'optim' & 
+                                                 res$sampling_method == 'pointcount')]
+               detp_ud <- res$det_p_est[which(res$LL_method == 'unmarked' & 
+                                                 res$sampling_method == 'Distance')]
+               detp_up <- res$det_p_est[which(res$LL_method == 'unmarked' & 
+                                                 res$sampling_method == 'pointcount')]
+            }
+            
+            # residuals for optim & distance sampling
+            {
+               rqrM_od <- rqResMar_optim(n_obs = simdat$n_obs, 
+                                         lambda_est = lam_od)
+               
+               rqrS_od <- rqResSum_optim(n_obs = simdat$n_obs, 
+                                         K = K,
+                                         p_est = detp_od,
+                                         lambda_est = lam_od)
+               
+               rqrO_od <- rqResObs_optim(n_obs = simdat$n_obs, 
+                                         p_est = detp_od,
+                                         K = K, 
+                                         lambda_est = lam_od,
+                                         sigma_est = sig_od, 
+                                         W = W,
+                                         y_list = simdat[['y_list']], 
+                                         sampling_method = 'distance')
+            }
+            
+            # residuals for optim & point count sampling
+            {
+               rqrM_op <- rqResMar_optim(n_obs = simdat$n_obs,
+                                         lambda_est = lam_op)
+               
+               rqrS_op <- rqResSum_optim(n_obs = simdat$n_obs, 
+                                         K = K,
+                                         p_est = detp_op,
+                                         lambda_est = lam_op)
+               
+               rqrO_op <- rqResObs_optim(n_obs = simdat$n_obs, 
+                                         p_est = detp_op,
+                                         K = K, 
+                                         lambda_est = lam_op, 
+                                         sigma_est = sig_op, 
+                                         W = W,
+                                         y_list = simdat[['y_list']], 
+                                         sampling_method = 'point count')
+            }
+            
+            # residuals for unmarked & distance sampling
+            {
+               rqrM_ud <- rqResMar_dist(umFit = resL$unmarked_dist)
+               
+               rqrS_ud <- rqResSum_dist(umFit = resL$unmarked_dist)
+               
+               rqrO_ud <- rqResObs_dist(umFit = resL$unmarked_dist)
+            }
+            
+            # residuals for unmarked & point count sampling
+            {
+               rqrM_up <- rqResMar(umFit = resL$unmarked_pc)
+               
+               rqrS_up <- rqResSum(umFit = resL$unmarked_pc)
+               
+               rqrO_up <- rqResObs(umFit = resL$unmarked_pc)
+            }
+            
+            res2 <- cbind(res, 
+                          'n_sites'      = rep(n_sites, nrow(res)),
+                          'n_samps'      = rep(n_samps, nrow(res)),
+                          'lambda_total' = rep(lambda1 + lambda2, nrow(res)),
+                          'lambda1'      = rep(lambda1, nrow(res)), 
+                          'lambda2'      = rep(lambda2, nrow(res)), 
+                          'rho'          = rep(lambda1 / (lambda1 + lambda2), nrow(res)),
+                          'sigma_true'   = rep(find_sigma(W = W, p_true = det_prob), nrow(res)))
+            
+            # save the simulated data & residuals for later
+            # (saving simulated data and analysed objects so that I can calculate c-hat values later)
+            savd <- list(simulated_data = simdat,
+                         analyzed_data = resL,
+                         rqrM_optim_distance  = rqrM_od, 
+                         rqrS_optim_distance  = rqrS_od, 
+                         rqrO_optim_distance  = rqrO_od,
+                         rqrM_optim_pointcount = rqrM_op, 
+                         rqrS_optim_pointcount = rqrS_op, 
+                         rqrO_optim_pointcount = rqrO_op,
+                         rqrM_unmarked_distance  = rqrM_ud, 
+                         rqrS_unmarked_distance  = rqrS_ud, 
+                         rqrO_unmarked_distance  = rqrO_ud,
+                         rqrM_unmarked_pointcount = rqrM_up, 
+                         rqrS_unmarked_pointcount = rqrS_up, 
+                         rqrO_unmarked_pointcount = rqrO_up)
+            savd[['analyzed_data']][['res']] <- res2
+            
+            # make sure the directly exists
+            foldername <- paste0('./results/save_everything/', 
+                                 sub(pattern = '^(.*)/[^/]*$', 
+                                     replacement = '\\1', 
+                                     x = savefilename))
+            filename <- paste0(sub(pattern = '^.*/([^/]*)$', 
+                                   replacement = '\\1', 
+                                   x = savefilename))
+            dir.create(path = foldername, recursive = TRUE, showWarnings = F)
+            
+            saveRDS(object = savd, 
+                    file = paste0(foldername, '/',
+                                  filename))
+         }
+         
+         # calculate pesky p-values
+         {
+            resid_pvals <- data.frame('rqres_Mar_pval_shapiro_wilks' = rep(NA,4),
+                                      'rqres_Mar_pval_anderson_darling' = rep(NA,4),
+                                      'rqres_Mar_pval_kolmogorov_Smirnov' = rep(NA,4),
+                                      'rqres_SiteSum_pval_shapiro_wilks' = rep(NA,4),
+                                      'rqres_SiteSum_pval_anderson_darling' = rep(NA,4),
+                                      'rqres_SiteSum_pval_kolmogorov_Smirnov' = rep(NA,4),
+                                      'rqres_Obs_pval_shapiro_wilks' = rep(NA,4),
+                                      'rqres_Obs_pval_anderson_darling' = rep(NA,4),
+                                      'rqres_Obs_pval_kolmogorov_Smirnov' = rep(NA,4))
+            
+            # shapiro-wilks, anderson-darling, and Lilliefors (Kolmogorov-Smirnov) tests of normality
+            resid_pvals[1,] <- c(normtest(rqrM_od[,1], 's1_M_pval'), 
+                                 normtest(rqrS_od, 's1_S_pval'),
+                                 normtest(rqrO_od, 's1_O_pval'))
+            
+            # shapiro-wilks, anderson-darling, and Lilliefors (Kolmogorov-Smirnov) tests of normality
+            resid_pvals[2,] <- c(normtest(rqrM_op[,1], 's2_M_pval'),
+                                 normtest(rqrS_op, 's2_S_pval'),
+                                 normtest(rqrO_op, 's2_O_pval'))
+            
+            # shapiro-wilks, anderson-darling, and Lilliefors (Kolmogorov-Smirnov) tests of normality
+            resid_pvals[3,] <- c(normtest(rqrM_ud[,1], 's3_M_pval'),
+                                 normtest(rqrS_ud, 's3_S_pval'),
+                                 normtest(rqrO_ud, 's3_O_pval'))
+            
+            # shapiro-wilks, anderson-darling, and Lilliefors (Kolmogorov-Smirnov) tests of normality
+            resid_pvals[4,] <- c(normtest(rqrM_up[,1], 's4_M_pval'),
+                                 normtest(rqrS_up, 's4_S_pval'),
+                                 normtest(rqrO_up, 's4_O_pval'))
+         }
+         
+         # stuff to return
+         cbind(res2,
+               resid_pvals)
+      },
+      error=function(cond) {
+         dir.create('./errors', showWarnings = FALSE)
+         saveRDS(object =  list(message = cond, 
+                                simdat = simdat,
+                                results = resL,
+                                n_obs = simdat$n_obs,
+                                lambda_est_op = lam_op), 
+                 file = paste0('./errors/error_', 
+                               gsub(pattern = ' ', replacement = '_', 
+                                    x = gsub(pattern = '[[:punct:]]', 
+                                             replacement = '',
+                                             x = Sys.time())),
+                               paste(Sys.info()[['nodename']], Sys.getpid(), sep='_'), 
+                               '.RDS'))
+         # Choose a return value in case of error
+         return(NA)
+      },
+      warning=function(cond) {
+         dir.create('./warnings', showWarnings = FALSE)
+         saveRDS(object =  list(message = cond, 
+                                simdat = simdat,
+                                results = resL,
+                                n_obs = simdat$n_obs,
+                                lambda_est_op = lam_op), 
+                 file = paste0('./warnings/warning_', 
+                               gsub(pattern = ' ', replacement = '_', 
+                                    x = gsub(pattern = '[[:punct:]]', 
+                                             replacement = '',
+                                             x = Sys.time())),
+                               paste(Sys.info()[['nodename']], Sys.getpid(), sep='_'),
+                               '.RDS'))
+         # Choose a return value in case of error
+         return(res2)
+      }
+   )
+   
+   return(out)
+}
