@@ -2,7 +2,7 @@
 % Please edit documentation in R/sim_data_p.R
 \name{sim_data_p}
 \alias{sim_data_p}
-\title{Simulate biased (via over-dispersion in p) point count and distance sampling data}
+\title{Simulate biased (via over-dispersion in p) point count and distance sampling data (Scenario 3)}
 \usage{
 sim_data_p(
   n_sites = 50,

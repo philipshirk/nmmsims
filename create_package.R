@@ -30,3 +30,5 @@ library('nmmsims')
   library.dynam.unload("nmmsims", libpath)
 }
 # but... https://stackoverflow.com/questions/26691878/must-r-packages-unload-dynamic-libraries-when-they-unload
+
+# devtools::install_github(repo = 'philipshirk/nmmsims')

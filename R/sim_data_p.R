@@ -1,4 +1,4 @@
-#' Simulate biased (via over-dispersion in p) point count and distance sampling data
+#' Simulate biased (via over-dispersion in p) point count and distance sampling data (Scenario 3)
 #'
 #' Generate point counts and/or distance sampling data that is biased by over-dispersion
 #' in the detection probability, p. Distance sampling data is created with each dataset,

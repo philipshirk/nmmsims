@@ -24,7 +24,8 @@ boot_fitstats <- function(n_sites,
                           lambda, 
                           sigma, 
                           det_prob, 
-                          sampling_method = 'distance', 
+                          analysis_method = 'optim',
+                          sampling_method = 'distance',
                           W = 20, 
                           nsim = 10,
                           # progress_bar = FALSE, 
@@ -63,12 +64,14 @@ boot_fitstats <- function(n_sites,
          ad <- analyse_data(simulated_data = nd, 
                             reps_to_analyze = n_samps, 
                             sampling_method = sampling_method, 
-                            analysis_method = 'optim', 
+                            analysis_method = analysis_method, 
                             W = W, 
                             simulate_gof_pvals = FALSE,
                             return = 'gof')
          
-         fs[i,] <- ad$optim[[sampling_method]]
+         
+         # update....
+         fs[i,] <- ad[[analysis_method]][[sampling_method]]
          
          # if(progress_bar){
          # update progress bar

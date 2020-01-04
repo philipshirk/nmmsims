@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation_function_N.R
 \name{simulation_function_N}
 \alias{simulation_function_N}
-\title{Primary function for simulating & analysing datasets that are biased by over-dispersion in N}
+\title{Primary function for simulating & analysing datasets that are biased by over-dispersion in N (Scenario 2)}
 \usage{
 simulation_function_N(
   n_sites = 50,
@@ -14,7 +14,7 @@ simulation_function_N(
   W = 20,
   reps_to_analyze = 3,
   return = "results",
-  savefilename = ""
+  savefilename = "set 1/datasets/data"
 )
 }
 \arguments{
@@ -39,14 +39,14 @@ simulation_function_N(
 \item{savefilename}{The simulated datasets and results ARE saved to file (currently not optional). This provides the path and filename for saving the intermediate steps in the analysis.}
 }
 \value{
-if everything works well, it returns a data.frame with the results of simulating a single dataset, analyzing it in 4 ways, and calculating randomized quantile residuals a la Knape et al. 2018. It also saves a list with the simulated dataset, dataframe of results (minus rqr residual info), and the actual rqr residuals to a savefilename inside the folder path 'working directory'/results/save_everything/savefilename. If there is an error, the function returns NA and also saves a file to 'working directory'/errors with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) Similarly, with a warning the function returns the results data.frame and also saves a file to 'working directory'/warnings with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) The user will have to go back and try to calculate rq-residuals from the output later.
+if everything works well, it returns a data.frame with the results of simulating a single dataset, analyzing it in 4 ways, and calculating randomized quantile residuals a la Knape et al. 2018. It also saves a list with the simulated dataset, dataframe of results (minus rqr residual info), and the actual rqr residuals to a savefilename inside the folder path 'working directory'/results/Scenario 2/savefilename. If there is an error, the function returns NA and also saves a file to 'working directory'/Scenario 2/set x/errors with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) Similarly, with a warning the function returns the results data.frame and also saves a file to 'working directory'/Scenario 2/set x/warnings with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) The user will have to go back and try to calculate rq-residuals from the output later.
 }
 \description{
 This function is one of the master functions in this package. It simulates and
 analyzes a single dataset that is over-dispersed in true abundance, N. 
 To do this many times, use an apply function. It's currently simplified and 
 assumes constant abundance, detection, transect length, NO simulated goodness-of-fit
-metrics, simulates both point count and distance data, and analyses both datasets
+metrics. It simulates both point count and distance data and analyses both datasets
 using both unmarked and optim.
 }
 \examples{

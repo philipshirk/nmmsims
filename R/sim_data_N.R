@@ -1,4 +1,4 @@
-#' Simulate biased (via over-dispersion in N) point count and distance sampling data
+#' Simulate biased (via over-dispersion in N) point count and distance sampling data (Scenario 2)
 #'
 #' Generate point counts and/or distance sampling data that is biased by over-dispersion
 #' in the true abundance, N. Distance sampling data is created with each dataset,

@@ -1,4 +1,4 @@
-#' Simulate biased (via double-counting) point count and distance sampling data
+#' Simulate biased (via double-counting) point count and distance sampling data (Scenario 1)
 #'
 #' Generate point counts and/or distance sampling data that is biased by double-counting.
 #' Distance sampling data is created with each dataset, but it can just be ignored if you
@@ -8,9 +8,9 @@
 #' @param n_sites number of sites (transects)
 #' @param n_samps number of samples (replicates) per site
 #' @param lambda  mean number of organisms per site
-#' @param det_prob mean detection probability (det_prob = gamma + beta)
-#' @param gamma probability of an organism being observed exactly TWICE
-#' @param sigma detection parameter (meters). Just leave this blank and it will be calculated from det_prob
+#' @param alpha   probability of NOT being observed (i.e. alpha = 1 - detection probability; and detection probability = gamma + beta)
+#' @param gamma   probability of an organism being observed exactly TWICE
+#' @param sigma   detection parameter (meters). Just leave this blank and it will be calculated from det_prob
 #' @param W transect half-width (meters)
 #'
 #' @return Returns a list of 4 items: 1. "true_N" is a matrix of true abundance values for each site (row) and sample (column). 2. "n_obs" is a matrix of the number of observed organisms at each site (row) and sample (column). 3. "y_list" is a list of vectors. Each vector holds the distance data for a single survey. 4. "inputs" is a list of input values.
@@ -22,17 +22,18 @@
 #'
 #' @export
 sim_data_nobs <- function(n_sites = 50, # number of sites
-                       n_samps = 6,  # number of samples per site
-                       lambda  = 10, # mean abundance at every site 
-                       det_prob = 0.42, # mean detection probability
-                       gamma   = 0.02,       # probably of being observed TWICE
-                       sigma   = NA, # detection parameter, calculated from det_prob
-                       W = 20){ # transect half-width
+                          n_samps = 6,  # number of samples per site
+                          lambda  = 10, # mean abundance at every site 
+                          alpha   = 1 - 0.42, # probability of NOT being observed (i.e. alpha = 1 - detection probability)
+                          gamma   = 0.02, # probably of being observed TWICE
+                          sigma   = NA, # detection parameter, calculated from det_prob
+                          W = 20){ # transect half-width
    
-   # probability of NOT being observed
-   alpha <- 1 - det_prob
    # probability of being observed ONCE (beta = 1 - alpha - gamma)
    beta  <- 1 - alpha - gamma
+   
+   # probability of being observed
+   det_prob <- alpha + beta + gamma
    
    inputs <- list(n_sites = n_sites,
                   n_samps = n_samps,

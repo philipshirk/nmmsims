@@ -2,13 +2,13 @@
 % Please edit documentation in R/sim_data_nobs.R
 \name{sim_data_nobs}
 \alias{sim_data_nobs}
-\title{Simulate biased (via double-counting) point count and distance sampling data}
+\title{Simulate biased (via double-counting) point count and distance sampling data (Scenario 1)}
 \usage{
 sim_data_nobs(
   n_sites = 50,
   n_samps = 6,
   lambda = 10,
-  det_prob = 0.42,
+  alpha = 1 - 0.42,
   gamma = 0.02,
   sigma = NA,
   W = 20
@@ -21,7 +21,7 @@ sim_data_nobs(
 
 \item{lambda}{mean number of organisms per site}
 
-\item{det_prob}{mean detection probability (det_prob = gamma + beta)}
+\item{alpha}{probability of NOT being observed (i.e. alpha = 1 - detection probability; and detection probability = gamma + beta)}
 
 \item{gamma}{probability of an organism being observed exactly TWICE}
 

@@ -341,49 +341,52 @@ analyse_data <- function(simulated_data,
             gof_und  <- fitstats(fm = hn_null)
          }
          
-         # simulate gof
-         {
+         # if only looking for gof, stop here
+         if(! ('results' %in% return)){
+            out$unmarked$distance <- gof_und
+         } else {
+            # simulate gof
             if(simulate_gof_pvals){
                gof_pvals_ud <- um_summary(parboot(hn_null, 
                                                   fitstats, 
                                                   nsim=simulate_gof_sims, 
                                                   parallel=simulate_gof_parallel))
             }
-         }
-         
-         # format estimates in a data.frame
-         {
-            und_lambda_CI <- confint(object = hn_null, type='state') %>% as.data.frame()
-            und_sigma_CI  <- confint(object = hn_null, type='det') %>% as.data.frame()
             
-            out.und <- data.frame(LL_method = 'unmarked',
-                                  sampling_method = 'Distance',
-                                  lambda_est = exp(hn_null@estimates@estimates$state@estimates),
-                                  lambda_SE  = exp(sqrt(diag((hn_null@estimates@estimates$state@covMat)))),
-                                  lambda_lcl = exp(und_lambda_CI[1,'0.025']),
-                                  lambda_ucl = exp(und_lambda_CI[1,'0.975']),
-                                  sigma_est  = exp(hn_null@estimates@estimates$det@estimates),
-                                  sigma_SE   = exp(sqrt(diag((hn_null@estimates@estimates$det@covMat)))),
-                                  sigma_lcl  = exp(und_sigma_CI[1,'0.025']),
-                                  sigma_ucl  = exp(und_sigma_CI[1,'0.975']),
-                                  SSE        = gof_und['SSE'],
-                                  SSE_pval   = if(simulate_gof_pvals) gof_pvals_ud['SSE', 'Pr(fit_sim > fit_obs)'] else NA,
-                                  Chisq      = gof_und['Chisq'],
-                                  Chisq_pval  = if(simulate_gof_pvals) gof_pvals_ud['Chisq', 'Pr(fit_sim > fit_obs)'] else NA,
-                                  Tukey      = gof_und['freemanTukey'],
-                                  Tukey_pval = if(simulate_gof_pvals) gof_pvals_ud['freemanTukey', 'Pr(fit_sim > fit_obs)'] else NA,
-                                  # c_hat = if(simulate_gof_pvals) c_hat else NA,
-                                  # rqres_marginal = NA,
-                                  # rqres_sitesum  = NA,
-                                  # rqres_obs      = NA,
-                                  # c_hat_marginal = NA,
-                                  # c_hat_sitesum  = NA,
-                                  det_p_est = NA) %>% 
-               mutate(det_p_est = calc_det_prob(W = W, sigma = sigma_est),
-                      lambda_CV = round((lambda_SE / lambda_est) * 100, 1),
-                      sigma_CV  = round((sigma_SE / sigma_est) * 100, 1))
-            
-            out <- rbind(out, out.und)
+            # format estimates in a data.frame
+            {
+               und_lambda_CI <- confint(object = hn_null, type='state') %>% as.data.frame()
+               und_sigma_CI  <- confint(object = hn_null, type='det') %>% as.data.frame()
+               
+               out.und <- data.frame(LL_method = 'unmarked',
+                                     sampling_method = 'Distance',
+                                     lambda_est = exp(hn_null@estimates@estimates$state@estimates),
+                                     lambda_SE  = exp(sqrt(diag((hn_null@estimates@estimates$state@covMat)))),
+                                     lambda_lcl = exp(und_lambda_CI[1,'0.025']),
+                                     lambda_ucl = exp(und_lambda_CI[1,'0.975']),
+                                     sigma_est  = exp(hn_null@estimates@estimates$det@estimates),
+                                     sigma_SE   = exp(sqrt(diag((hn_null@estimates@estimates$det@covMat)))),
+                                     sigma_lcl  = exp(und_sigma_CI[1,'0.025']),
+                                     sigma_ucl  = exp(und_sigma_CI[1,'0.975']),
+                                     SSE        = gof_und['SSE'],
+                                     SSE_pval   = if(simulate_gof_pvals) gof_pvals_ud['SSE', 'Pr(fit_sim > fit_obs)'] else NA,
+                                     Chisq      = gof_und['Chisq'],
+                                     Chisq_pval  = if(simulate_gof_pvals) gof_pvals_ud['Chisq', 'Pr(fit_sim > fit_obs)'] else NA,
+                                     Tukey      = gof_und['freemanTukey'],
+                                     Tukey_pval = if(simulate_gof_pvals) gof_pvals_ud['freemanTukey', 'Pr(fit_sim > fit_obs)'] else NA,
+                                     # c_hat = if(simulate_gof_pvals) c_hat else NA,
+                                     # rqres_marginal = NA,
+                                     # rqres_sitesum  = NA,
+                                     # rqres_obs      = NA,
+                                     # c_hat_marginal = NA,
+                                     # c_hat_sitesum  = NA,
+                                     det_p_est = NA) %>% 
+                  mutate(det_p_est = calc_det_prob(W = W, sigma = sigma_est),
+                         lambda_CV = round((lambda_SE / lambda_est) * 100, 1),
+                         sigma_CV  = round((sigma_SE / sigma_est) * 100, 1))
+               
+               out <- rbind(out, out.und)
+            }
          }
       }
       
@@ -404,78 +407,89 @@ analyse_data <- function(simulated_data,
             gof_unr  <- fitstats(fm = pc_null)
          }
          
-         # simulate gof
-         {
-            if(simulate_gof_pvals){
-               pbr <- parboot(pc_null,
-                              fitstats, 
-                              nsim=simulate_gof_sims, 
-                              parallel=simulate_gof_parallel)
+         # if only looking for gof, stop here
+         if(! ('results' %in% return)){
+            out$unmarked$pointcount <- gof_unr
+         } else {
+            # if simulating gof...
+               if(simulate_gof_pvals){
+                  pbr <- parboot(pc_null,
+                                 fitstats, 
+                                 nsim=simulate_gof_sims, 
+                                 parallel=simulate_gof_parallel)
+                  
+                  gof_pvals_ur <- um_summary(pbr)
+               }
+            
+            # format estimates in a data.frame
+            {
+               unr_lambda_CI <- confint(object = pc_null, type='state') %>% as.data.frame()
+               unr_sigma_CI  <- confint(object = pc_null, type='det') %>% as.data.frame()
                
-               gof_pvals_ur <- um_summary(pbr)
+               # copied from https://github.com/cran/unmarked/blob/master/R/utils.R
+               logistic <- function(x) {
+                  1/(1 + exp(-x)) # logistic = inverse of logit
+               }
+               logistic.grad <- function(x) {
+                  exp(-x)/(exp(-x)+1)^2 # gradient = ???
+               }
+               
+               # detection parameter estimate
+               # logistic(pc_null@estimates@estimates$det@estimates)
+               # detection parameter SE estimate
+               # gradient^2 * coef. variance
+               # logistic.grad(pc_null@estimates@estimates$det@estimates)^2 * pc_null@estimates@estimates$det@covMat
+               
+               out.unr <- data.frame(LL_method = 'unmarked',
+                                     sampling_method = 'pointcount',
+                                     lambda_est = exp(pc_null@estimates@estimates$state@estimates),
+                                     lambda_SE  = exp(sqrt(diag(pc_null@estimates@estimates$state@covMat))), # sqrt(backTransform(obj = pc_null, type = 'state')@covMat)
+                                     lambda_lcl = exp(unr_lambda_CI[1,'0.025']),
+                                     lambda_ucl = exp(unr_lambda_CI[1,'0.975']),
+                                     sigma_est  = backTransform(obj = pc_null, type = 'det')@estimate, 
+                                     # = 1 / (1 + exp(-sig)) = logistic(pc_null@estimates@estimates$det@estimates)
+                                     sigma_SE   = sqrt(backTransform(obj = pc_null, type = 'det')@covMat),
+                                     # converting the SE back is a little tricky. See here: 
+                                     # https://www.andrewheiss.com/blog/2016/04/25/convert-logistic-regression-standard-errors-to-odds-ratios-with-r/
+                                     # and here: 
+                                     # https://github.com/cran/unmarked/blob/master/R/utils.R
+                                     # sqrt(logistic.grad(pc_null@estimates@estimates$det@estimates)^2 * pc_null@estimates@estimates$det@covMat)
+                                     
+                                     sigma_lcl  = logistic(unr_sigma_CI[1,'0.025']),
+                                     sigma_ucl  = logistic(unr_sigma_CI[1,'0.975']),
+                                     SSE        = gof_unr['SSE'],
+                                     SSE_pval   = if(simulate_gof_pvals) gof_pvals_ur['SSE', 'Pr(fit_sim > fit_obs)'] else NA,
+                                     Chisq      = gof_unr['Chisq'],
+                                     Chisq_pval  = if(simulate_gof_pvals) gof_pvals_ur['Chisq', 'Pr(fit_sim > fit_obs)'] else NA,
+                                     Tukey      = gof_unr['freemanTukey'],
+                                     Tukey_pval = if(simulate_gof_pvals) gof_pvals_ur['freemanTukey', 'Pr(fit_sim > fit_obs)'] else NA,
+                                     # c_hat = if(simulate_gof_pvals) c_hat else NA,
+                                     # rqres_marginal = NA,
+                                     # rqres_sitesum  = NA,
+                                     # rqres_obs      = NA,
+                                     # c_hat_marginal = NA,
+                                     # c_hat_sitesum  = NA,
+                                     det_p_est = NA) %>% 
+                  mutate(det_p_est = sigma_est,
+                         lambda_CV = round((lambda_SE / lambda_est) * 100, 1),
+                         sigma_CV  = round((sigma_SE / sigma_est) * 100, 1))
+               
+               out <- rbind(out, out.unr)
             }
-         }
-         
-         # format estimates in a data.frame
-         {
-            unr_lambda_CI <- confint(object = pc_null, type='state') %>% as.data.frame()
-            unr_sigma_CI  <- confint(object = pc_null, type='det') %>% as.data.frame()
-            
-            # copied from https://github.com/cran/unmarked/blob/master/R/utils.R
-            logistic <- function(x) {
-               1/(1 + exp(-x)) # logistic = inverse of logit
-            }
-            logistic.grad <- function(x) {
-               exp(-x)/(exp(-x)+1)^2 # gradient = ???
-            }
-            
-            # detection parameter estimate
-            # logistic(pc_null@estimates@estimates$det@estimates)
-            # detection parameter SE estimate
-            # gradient^2 * coef. variance
-            # logistic.grad(pc_null@estimates@estimates$det@estimates)^2 * pc_null@estimates@estimates$det@covMat
-            
-            out.unr <- data.frame(LL_method = 'unmarked',
-                                  sampling_method = 'pointcount',
-                                  lambda_est = exp(pc_null@estimates@estimates$state@estimates),
-                                  lambda_SE  = exp(sqrt(diag(pc_null@estimates@estimates$state@covMat))), # sqrt(backTransform(obj = pc_null, type = 'state')@covMat)
-                                  lambda_lcl = exp(unr_lambda_CI[1,'0.025']),
-                                  lambda_ucl = exp(unr_lambda_CI[1,'0.975']),
-                                  sigma_est  = backTransform(obj = pc_null, type = 'det')@estimate, 
-                                  # = 1 / (1 + exp(-sig)) = logistic(pc_null@estimates@estimates$det@estimates)
-                                  sigma_SE   = sqrt(backTransform(obj = pc_null, type = 'det')@covMat),
-                                  # converting the SE back is a little tricky. See here: 
-                                  # https://www.andrewheiss.com/blog/2016/04/25/convert-logistic-regression-standard-errors-to-odds-ratios-with-r/
-                                  # and here: 
-                                  # https://github.com/cran/unmarked/blob/master/R/utils.R
-                                  # sqrt(logistic.grad(pc_null@estimates@estimates$det@estimates)^2 * pc_null@estimates@estimates$det@covMat)
-                                  
-                                  sigma_lcl  = logistic(unr_sigma_CI[1,'0.025']),
-                                  sigma_ucl  = logistic(unr_sigma_CI[1,'0.975']),
-                                  SSE        = gof_unr['SSE'],
-                                  SSE_pval   = if(simulate_gof_pvals) gof_pvals_ur['SSE', 'Pr(fit_sim > fit_obs)'] else NA,
-                                  Chisq      = gof_unr['Chisq'],
-                                  Chisq_pval  = if(simulate_gof_pvals) gof_pvals_ur['Chisq', 'Pr(fit_sim > fit_obs)'] else NA,
-                                  Tukey      = gof_unr['freemanTukey'],
-                                  Tukey_pval = if(simulate_gof_pvals) gof_pvals_ur['freemanTukey', 'Pr(fit_sim > fit_obs)'] else NA,
-                                  # c_hat = if(simulate_gof_pvals) c_hat else NA,
-                                  # rqres_marginal = NA,
-                                  # rqres_sitesum  = NA,
-                                  # rqres_obs      = NA,
-                                  # c_hat_marginal = NA,
-                                  # c_hat_sitesum  = NA,
-                                  det_p_est = NA) %>% 
-               mutate(det_p_est = sigma_est,
-                      lambda_CV = round((lambda_SE / lambda_est) * 100, 1),
-                      sigma_CV  = round((sigma_SE / sigma_est) * 100, 1))
-            
-            out <- rbind(out, out.unr)
          }
       }
    }
    
-   return(list(df = out, 
-               unmarked_dist = hn_null,
-               unmarked_pc   = pc_null,
-               inputs = inputs))
+   return(
+      # if only looking for the gof simulations, just return that
+      if(! ('results' %in% return)){
+         out
+      } else {
+         # otherwise return a lot more info
+         list(df = out, 
+              unmarked_dist = hn_null,
+              unmarked_pc   = pc_null,
+              inputs = inputs)
+      }
+   ) 
 }

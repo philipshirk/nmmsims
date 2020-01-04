@@ -1,10 +1,10 @@
-#' Primary function for simulating & analysing datasets that are biased by over-dispersion in N
+#' Primary function for simulating & analysing datasets that are biased by over-dispersion in N (Scenario 2)
 #'
 #' This function is one of the master functions in this package. It simulates and
 #' analyzes a single dataset that is over-dispersed in true abundance, N. 
 #' To do this many times, use an apply function. It's currently simplified and 
 #' assumes constant abundance, detection, transect length, NO simulated goodness-of-fit
-#' metrics, simulates both point count and distance data, and analyses both datasets
+#' metrics. It simulates both point count and distance data and analyses both datasets
 #' using both unmarked and optim.
 #'
 #' @param n_sites number of sites (transects)
@@ -18,7 +18,7 @@
 #' @param return What to return from the function call. Currently the only option is 'results'. May change this to only analyze simulated goodness-of-fit metrics.
 #' @param savefilename The simulated datasets and results ARE saved to file (currently not optional). This provides the path and filename for saving the intermediate steps in the analysis. 
 #'
-#' @return if everything works well, it returns a data.frame with the results of simulating a single dataset, analyzing it in 4 ways, and calculating randomized quantile residuals a la Knape et al. 2018. It also saves a list with the simulated dataset, dataframe of results (minus rqr residual info), and the actual rqr residuals to a savefilename inside the folder path 'working directory'/results/save_everything/savefilename. If there is an error, the function returns NA and also saves a file to 'working directory'/errors with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) Similarly, with a warning the function returns the results data.frame and also saves a file to 'working directory'/warnings with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) The user will have to go back and try to calculate rq-residuals from the output later. 
+#' @return if everything works well, it returns a data.frame with the results of simulating a single dataset, analyzing it in 4 ways, and calculating randomized quantile residuals a la Knape et al. 2018. It also saves a list with the simulated dataset, dataframe of results (minus rqr residual info), and the actual rqr residuals to a savefilename inside the folder path 'working directory'/results/Scenario 2/savefilename. If there is an error, the function returns NA and also saves a file to 'working directory'/Scenario 2/set x/errors with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) Similarly, with a warning the function returns the results data.frame and also saves a file to 'working directory'/Scenario 2/set x/warnings with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) The user will have to go back and try to calculate rq-residuals from the output later. 
 #'
 #' @examples
 #' simulation_function_N()
@@ -40,7 +40,7 @@ simulation_function_N = function(n_sites = 50, # number of sites
                                # simulate_gof_sims = 5,
                                # simulate_gof_parallel = T, 
                                return = 'results',
-                               savefilename = '') {
+                               savefilename = 'set 1/datasets/data') {
    
    out <- tryCatch(
       {
@@ -185,13 +185,21 @@ simulation_function_N = function(n_sites = 50, # number of sites
             savd[['analyzed_data']][['res']] <- res2
             
             # make sure the directly exists
-            foldername <- paste0('./results/save_everything/', 
+            foldername <- paste0('./results/Scenario 2/', 
                                  sub(pattern = '^(.*)/[^/]*$', 
                                      replacement = '\\1', 
                                      x = savefilename))
             filename <- paste0(sub(pattern = '^.*/([^/]*)$', 
                                    replacement = '\\1', 
-                                   x = savefilename))
+                                   x = savefilename), 
+                               '_',
+                               gsub(pattern = ' ', replacement = '_', 
+                                    x = gsub(pattern = ':', 
+                                             replacement = '',
+                                             x = Sys.time())),
+                               '_',
+                               paste(Sys.info()[['nodename']], Sys.getpid(), sep='_'),
+                               '.RDS')
             dir.create(path = foldername, recursive = TRUE, showWarnings = F)
             
             saveRDS(object = savd, 
@@ -237,36 +245,52 @@ simulation_function_N = function(n_sites = 50, # number of sites
                resid_pvals)
       },
       error=function(cond) {
-         dir.create('./errors', showWarnings = FALSE)
+         folders <- c(getwd(),
+                      'results',
+                      'Scenario 2',
+                      dirname(dirname(savefilename)),
+                      'errors')
+         
+         foldername <- do.call('file.path', as.list(folders))
+         dir.create(foldername, recursive = T, showWarnings = FALSE)
+         
          saveRDS(object =  list(message = cond, 
                                 simdat = simdat,
                                 results = resL,
                                 n_obs = simdat$n_obs,
                                 lambda_est_op = lam_op), 
-                 file = paste0('./errors/error_', 
-                               gsub(pattern = ' ', replacement = '_', 
-                                    x = gsub(pattern = '[[:punct:]]', 
-                                             replacement = '',
-                                             x = Sys.time())),
-                               paste(Sys.info()[['nodename']], Sys.getpid(), sep='_'), 
-                               '.RDS'))
+                 file = file.path(foldername,
+                                  paste0(gsub(pattern = ' ', replacement = '_', 
+                                              x = gsub(pattern = ':', 
+                                                       replacement = '',
+                                                       x = Sys.time())),
+                                         paste(Sys.info()[['nodename']], Sys.getpid(), sep='_'), 
+                                         '.RDS')))
          # Choose a return value in case of error
          return(NA)
       },
       warning=function(cond) {
-         dir.create('./warnings', showWarnings = FALSE)
+         folders <- c(getwd(),
+                      'results',
+                      'Scenario 2',
+                      dirname(dirname(savefilename)),
+                      'warnings')
+         
+         foldername <- do.call('file.path', as.list(folders))
+         dir.create(foldername, recursive = T, showWarnings = FALSE)
+         
          saveRDS(object =  list(message = cond, 
                                 simdat = simdat,
                                 results = resL,
                                 n_obs = simdat$n_obs,
                                 lambda_est_op = lam_op), 
-                 file = paste0('./warnings/warning_', 
-                               gsub(pattern = ' ', replacement = '_', 
-                                    x = gsub(pattern = '[[:punct:]]', 
-                                             replacement = '',
-                                             x = Sys.time())),
-                               paste(Sys.info()[['nodename']], Sys.getpid(), sep='_'),
-                               '.RDS'))
+                 file = file.path(foldername,
+                                  paste0(gsub(pattern = ' ', replacement = '_', 
+                                              x = gsub(pattern = ':', 
+                                                       replacement = '',
+                                                       x = Sys.time())),
+                                         paste(Sys.info()[['nodename']], Sys.getpid(), sep='_'),
+                                         '.RDS')))
          # Choose a return value in case of error
          return(res2)
       }

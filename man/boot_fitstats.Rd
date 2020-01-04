@@ -10,6 +10,7 @@ boot_fitstats(
   lambda,
   sigma,
   det_prob,
+  analysis_method = "optim",
   sampling_method = "distance",
   W = 20,
   nsim = 10,
