@@ -21,9 +21,9 @@
 # NOT UPDATED. I SHOULD CHANGE THIS TO READ IN SIMULATED DATA FILES AND CALCULATE THINGS BASED ON THOSE
 # INSTEAD OF SIMULATING NEW DATA SETS
 simulate_gof_function = function(filename = NA,
-                                      simulate_gof_sims = 5,
-                                      simulate_gof_parallel = F,
-                                      savefilename = 'set 3/datasets/data'){
+                                 simulate_gof_sims = 5,
+                                 simulate_gof_parallel = F,
+                                 savefilename = 'set 3/datasets/data'){
   out <- tryCatch(
     {
       # read in the data
@@ -57,6 +57,9 @@ simulate_gof_function = function(filename = NA,
       
       W <- simdat$inputs$W
       
+      # observed GOF values
+      gof_obs <- res.df[,c('SSE', 'Chisq', 'Tukey')]
+      
       for (i in 1:nrow(res.df)) {
         gof_pvals <- switch(analysis_methods[i],
                             'optim' = {
@@ -65,16 +68,16 @@ simulate_gof_function = function(filename = NA,
                                                         lambda = lambda_est[i], 
                                                         sigma = sigma_est[i], 
                                                         det_prob = det_prob_est[i], 
-                                                        sampling_method = sampling_methods[i], 
-                                                        analysis_method = analysis_methods[i],
+                                                        sampling_method = tolower(sampling_methods[i]), 
+                                                        analysis_method = tolower(analysis_methods[i]),
                                                         W = W, 
                                                         nsim = simulate_gof_sims, 
                                                         parallel = simulate_gof_parallel)
                               
-                              opt_summary(fit_data = gof_obs, fit_sims = fit_sims)
+                              opt_summary(fit_data = unlist(gof_obs[i,]), fit_sims = fit_sims)
                             },
                             'unmarked' = {
-                              unmarked_fit <- switch(sampling_methods[i],
+                              unmarked_fit <- switch(tolower(sampling_methods[i]),
                                                      'distance' = simdatlist$analyzed_data$unmarked_dist,
                                                      'pointcount' = simdatlist$analyzed_data$unmarked_pc)
                               
@@ -93,10 +96,8 @@ simulate_gof_function = function(filename = NA,
       simdatlist
     },
     error=function(cond) {
-      folders <- c(getwd(),
-                   'results',
-                   'Scenario 1',
-                   dirname(dirname(savefilename)),
+      folders <- c(sub(pattern = 'set 1', replacement = 'set 3', x =
+                       sub(pattern = '(.*).RDS', replacement = '\\1', dirname(dirname(filename)))),
                    'errors',
                    'gof')
       
@@ -106,24 +107,22 @@ simulate_gof_function = function(filename = NA,
       saveRDS(object =  list(message = cond, 
                              simdat = simdat,
                              results = res.df,
-                             n_obs = simdat$n_obs,
-                             lambda_est_op = lam_op), 
+                             n_obs = simdat$n_obs), 
               file = file.path(foldername,
                                paste0(gsub(pattern = ' ', replacement = '_', 
                                            x = gsub(pattern = ':', 
                                                     replacement = '',
                                                     x = Sys.time())),
+                                      '_',
                                       paste(Sys.info()[['nodename']], Sys.getpid(), sep='_'), 
                                       '.RDS')))
       # Choose a return value in case of error
       return(NA)
     },
     warning=function(cond) {
-      folders <- c(getwd(),
-                   'results',
-                   'Scenario 1',
-                   dirname(dirname(savefilename)),
-                   'warnings',
+      folders <- c(sub(pattern = 'set 1', replacement = 'set 3', x =
+                         sub(pattern = '(.*).RDS', replacement = '\\1', dirname(dirname(filename)))),
+                   'errors',
                    'gof')
       
       foldername <- do.call('file.path', as.list(folders))
@@ -132,8 +131,7 @@ simulate_gof_function = function(filename = NA,
       saveRDS(object =  list(message = cond, 
                              simdat = simdat,
                              results = res.df,
-                             n_obs = simdat$n_obs,
-                             lambda_est_op = lam_op), 
+                             n_obs = simdat$n_obs), 
               file = file.path(foldername,
                                paste0(gsub(pattern = ' ', replacement = '_', 
                                            x = gsub(pattern = ':', 

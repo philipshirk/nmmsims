@@ -8,7 +8,7 @@ sim_data_nobs(
   n_sites = 50,
   n_samps = 6,
   lambda = 10,
-  alpha = 1 - 0.42,
+  alpha = 0.58,
   gamma = 0.02,
   sigma = NA,
   W = 20

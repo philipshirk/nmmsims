@@ -50,7 +50,7 @@ simulation_function_nobs = function(n_sites = 50, # number of sites
     {
       if(is.na(beta)) beta <- 1 - alpha - gamma
       if(is.na(det_prob)) det_prob = gamma + beta
-      if(alpha + beta + gamma != 1) stop('The parameters alpha, beta, and gamma must add to 1.')
+      if( round(alpha + beta + gamma, 3) != 1.000) stop('The parameters alpha, beta, and gamma must add to 1.')
       
       simdat <- sim_data_nobs(n_sites = n_sites,
                               n_samps = n_samps,
@@ -257,10 +257,10 @@ simulation_function_nobs = function(n_sites = 50, # number of sites
       dir.create(foldername, recursive = T, showWarnings = FALSE)
       
       saveRDS(object =  list(message = cond, 
-                             simdat = simdat,
-                             results = resL,
-                             n_obs = simdat$n_obs,
-                             lambda_est_op = lam_op), 
+                             simdat = if(exists(x = 'simdat')) simdat else NA,
+                             results = if(exists(x = 'resL')) resL else NA,
+                             n_obs = if(exists(x = 'simdat')) simdat$n_obs else NA,
+                             lambda_est_op = if(exists(x = 'lam_op')) lam_op else NA), 
               file = file.path(foldername,
                                paste0(gsub(pattern = ' ', replacement = '_', 
                                            x = gsub(pattern = ':', 
@@ -282,10 +282,10 @@ simulation_function_nobs = function(n_sites = 50, # number of sites
       dir.create(foldername, recursive = T, showWarnings = FALSE)
       
       saveRDS(object =  list(message = cond, 
-                             simdat = simdat,
-                             results = resL,
-                             n_obs = simdat$n_obs,
-                             lambda_est_op = lam_op), 
+                             simdat = if(exists(x = 'simdat')) simdat else NA,
+                             results = if(exists(x = 'resL')) resL else NA,
+                             n_obs = if(exists(x = 'simdat')) simdat$n_obs else NA,
+                             lambda_est_op = if(exists(x = 'lam_op')) lam_op else NA), 
               file = file.path(foldername,
                                paste0(gsub(pattern = ' ', replacement = '_', 
                                            x = gsub(pattern = ':', 

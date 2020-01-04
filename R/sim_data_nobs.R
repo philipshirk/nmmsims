@@ -24,16 +24,16 @@
 sim_data_nobs <- function(n_sites = 50, # number of sites
                           n_samps = 6,  # number of samples per site
                           lambda  = 10, # mean abundance at every site 
-                          alpha   = 1 - 0.42, # probability of NOT being observed (i.e. alpha = 1 - detection probability)
+                          alpha   = 0.58, # probability of NOT being observed (i.e. alpha = 1 - detection probability)
                           gamma   = 0.02, # probably of being observed TWICE
                           sigma   = NA, # detection parameter, calculated from det_prob
                           W = 20){ # transect half-width
    
    # probability of being observed ONCE (beta = 1 - alpha - gamma)
-   beta  <- 1 - alpha - gamma
+   beta  <- (1 - alpha - gamma)
    
    # probability of being observed
-   det_prob <- alpha + beta + gamma
+   det_prob <- beta + gamma
    
    inputs <- list(n_sites = n_sites,
                   n_samps = n_samps,
