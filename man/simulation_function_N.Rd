@@ -14,7 +14,7 @@ simulation_function_N(
   W = 20,
   reps_to_analyze = 3,
   return = "results",
-  savefilename = "set 1/datasets/data"
+  savefilename = file.path("set 1", "datasets", "data")
 )
 }
 \arguments{

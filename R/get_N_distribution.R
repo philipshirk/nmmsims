@@ -111,7 +111,7 @@ get_N_distribution <- function(lambda_est,
       # fudge is a vector over all N (at 1 site)
       # divide by the total probability to get absolute probabilities instead
       # of relative probabilities (at that site)
-      post[i,,1] <- fudge / sum(fudge)
+      post[i,,1] <- if(sum(fudge)==0) fudge else (fudge / sum(fudge))
    }
    return(post)
 }

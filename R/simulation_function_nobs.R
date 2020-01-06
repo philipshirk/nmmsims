@@ -44,7 +44,7 @@ simulation_function_nobs = function(n_sites = 50, # number of sites
                                     # simulate_gof_sims = 5,
                                     # simulate_gof_parallel = T, 
                                     return = 'results',
-                                    savefilename = 'set 1/datasets/data') {
+                                    savefilename = file.path('set 1', 'datasets', 'data')) {
   
   out <- tryCatch(
     {
@@ -191,8 +191,11 @@ simulation_function_nobs = function(n_sites = 50, # number of sites
         savd[['analyzed_data']][['res']] <- res2
         
         # make sure the directly exists
-        foldername <- paste0('./results/Scenario 1/', 
-                             dirname(savefilename))
+        foldername <- file.path(getwd(),
+                                'results',
+                                'Scenario 1',
+                                dirname(savefilename))
+        
         filename <- paste0(basename(savefilename), 
                            '_',
                            gsub(pattern = ' ', replacement = '_', 
@@ -205,8 +208,9 @@ simulation_function_nobs = function(n_sites = 50, # number of sites
         dir.create(path = foldername, recursive = TRUE, showWarnings = F)
         
         saveRDS(object = savd, 
-                file = paste0(foldername, '/',
-                              filename))
+                file = do.call(what = file.path, 
+                               args = list(foldername,
+                                        filename)))
       }
       
       # calculate pesky p-values
