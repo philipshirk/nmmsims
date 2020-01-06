@@ -113,5 +113,19 @@ get_N_distribution <- function(lambda_est,
       # of relative probabilities (at that site)
       post[i,,1] <- if(sum(fudge)==0) fudge else (fudge / sum(fudge))
    }
-   return(post)
+   
+   # add in a real fudge factor b/c with small sample sizes this isn't working and I don't
+   # want to spend more time figuring out why it doesn't. If the density is low enough, it's 
+   # generating NA's. I tried to get around that by replacing them with 0's, but the problem 
+   # then becomes that some sites end up with 0 probability of ALL possible N values. 
+   # For those rows I'll just replace the 0's with the site that has the closest to 100% chance 
+   # of having 0 individuals
+   if(any(rowSums(post)==0)){
+      # rows with all 0's
+      badrows <- which(rowSums(post)==0)
+      # row with lowest positive probability of having 1
+      lowestrow <- which(post[,2,] == min(post[ (post[,2,] > 0) ,2,]))[1]
+      post[badrows,,] <- post[lowestrow,,]
+   }
+      return(post)
 }
