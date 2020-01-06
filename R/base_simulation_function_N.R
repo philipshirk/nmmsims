@@ -1,5 +1,7 @@
-#' Primary function for simulating & analysing datasets that are biased by over-dispersion in N (Scenario 2)
+#' The guts for simulating & analysing datasets that are biased by over-dispersion in N (Scenario 2)
 #'
+#' It's recommended to use "simulation_function_N" instead of this one as 
+#' "simulation_function_N" has better error handling (hopefully).
 #' This function is one of the master functions in this package. It simulates and
 #' analyzes a single dataset that is over-dispersed in true abundance, N. 
 #' To do this many times, use an apply function. It's currently simplified and 
@@ -21,12 +23,12 @@
 #' @return if everything works well, it returns a data.frame with the results of simulating a single dataset, analyzing it in 4 ways, and calculating randomized quantile residuals a la Knape et al. 2018. It also saves a list with the simulated dataset, dataframe of results (minus rqr residual info), and the actual rqr residuals to a savefilename inside the folder path 'working directory'/results/Scenario 2/savefilename. If there is an error, the function returns NA and also saves a file to 'working directory'/Scenario 2/set x/errors with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) Similarly, with a warning the function returns the results data.frame and also saves a file to 'working directory'/Scenario 2/set x/warnings with the simulated dataset and the results data.frame but no rq-residuals (it's basically assumed that the rq-residuals were the source of the error.) The user will have to go back and try to calculate rq-residuals from the output later. 
 #'
 #' @examples
-#' simulation_function_N()
+#' base_simulation_function_N()
 #'
 #' @import tidyverse
 #' 
 #' @export
-simulation_function_N = function(n_sites = 50, # number of sites
+base_simulation_function_N = function(n_sites = 50, # number of sites
                                n_samps = 6,  # number of samples per site
                                lambda1 = 5, 
                                lambda2 = 5, 
@@ -109,14 +111,22 @@ simulation_function_N = function(n_sites = 50, # number of sites
                                          p_est = detp_od,
                                          lambda_est = lam_od)
                
-               rqrO_od <- rqResObs_optim(n_obs = simdat$n_obs, 
-                                         p_est = detp_od,
-                                         K = K, 
-                                         lambda_est = lam_od,
-                                         sigma_est = sig_od, 
-                                         W = W,
-                                         y_list = simdat[['y_list']], 
-                                         sampling_method = 'distance')
+               # observation residuals are throwing some errors occassionally. I think only when sample sizes at a site are 0 and hence inadequate for estimating N distributions.
+               # But anyway, I'm going to add in a trycatch to hopefully get rid of the error. 
+               rqrO_od <- tryCatch(expr = {
+                  rqResObs_optim(n_obs = simdat$n_obs, 
+                                 p_est = detp_od,
+                                 K = K, 
+                                 lambda_est = lam_od,
+                                 sigma_est = sig_od, 
+                                 W = W,
+                                 y_list = simdat[['y_list']], 
+                                 sampling_method = 'distance')
+               }, 
+               error = function(cond) {
+                  print(cond)
+                  return(NA)
+               })
             }
             
             # residuals for optim & point count sampling
@@ -129,14 +139,22 @@ simulation_function_N = function(n_sites = 50, # number of sites
                                          p_est = detp_op,
                                          lambda_est = lam_op)
                
-               rqrO_op <- rqResObs_optim(n_obs = simdat$n_obs, 
-                                         p_est = detp_op,
-                                         K = K, 
-                                         lambda_est = lam_op, 
-                                         sigma_est = sig_op, 
-                                         W = W,
-                                         y_list = simdat[['y_list']], 
-                                         sampling_method = 'point count')
+               # observation residuals are throwing some errors occassionally. I think only when sample sizes at a site are 0 and hence inadequate for estimating N distributions.
+               # But anyway, I'm going to add in a trycatch to hopefully get rid of the error. 
+               rqrO_op <- tryCatch(expr = {
+                  rqResObs_optim(n_obs = simdat$n_obs, 
+                                 p_est = detp_op,
+                                 K = K, 
+                                 lambda_est = lam_op, 
+                                 sigma_est = sig_op, 
+                                 W = W,
+                                 y_list = simdat[['y_list']], 
+                                 sampling_method = 'point count')  
+               }, 
+               error = function(cond) {
+                  print(cond)
+                  return(NA)
+               })
             }
             
             # residuals for unmarked & distance sampling
@@ -145,7 +163,13 @@ simulation_function_N = function(n_sites = 50, # number of sites
                
                rqrS_ud <- rqResSum_dist(umFit = resL$unmarked_dist)
                
-               rqrO_ud <- rqResObs_dist(umFit = resL$unmarked_dist)
+               rqrO_ud <- tryCatch(expr = {
+                  rqResObs_dist(umFit = resL$unmarked_dist)
+               }, 
+               error = function(cond) {
+                  print(cond)
+                  return(NA)
+               })
             }
             
             # residuals for unmarked & point count sampling
@@ -154,7 +178,13 @@ simulation_function_N = function(n_sites = 50, # number of sites
                
                rqrS_up <- rqResSum(umFit = resL$unmarked_pc)
                
-               rqrO_up <- rqResObs(umFit = resL$unmarked_pc)
+               rqrO_up <- tryCatch(expr = {
+                  rqResObs(umFit = resL$unmarked_pc)
+               }, 
+               error = function(cond) {
+                  print(cond)
+                  return(NA)
+               })
             }
             
             res2 <- cbind(res, 
@@ -222,22 +252,22 @@ simulation_function_N = function(n_sites = 50, # number of sites
             # shapiro-wilks, anderson-darling, and Lilliefors (Kolmogorov-Smirnov) tests of normality
             resid_pvals[1,] <- c(normtest(rqrM_od[,1], 's1_M_pval'), 
                                  normtest(rqrS_od, 's1_S_pval'),
-                                 normtest(rqrO_od, 's1_O_pval'))
+                                 if(length(rqrO_od)==1) rep(rqrO_od, length(resid_pvals[1,])) else normtest(rqrO_od, 's1_O_pval'))
             
             # shapiro-wilks, anderson-darling, and Lilliefors (Kolmogorov-Smirnov) tests of normality
             resid_pvals[2,] <- c(normtest(rqrM_op[,1], 's2_M_pval'),
                                  normtest(rqrS_op, 's2_S_pval'),
-                                 normtest(rqrO_op, 's2_O_pval'))
+                                 if(length(rqrO_op) == 1) rep(rqrO_op, length(resid_pvals[2,])) else normtest(rqrO_op, 's2_O_pval'))
             
             # shapiro-wilks, anderson-darling, and Lilliefors (Kolmogorov-Smirnov) tests of normality
             resid_pvals[3,] <- c(normtest(rqrM_ud[,1], 's3_M_pval'),
                                  normtest(rqrS_ud, 's3_S_pval'),
-                                 normtest(rqrO_ud, 's3_O_pval'))
+                                 if(length(rqrO_ud) == 1) rep(rqrO_ud, length(resid_pvals[3,])) else normtest(rqrO_ud, 's3_O_pval'))
             
             # shapiro-wilks, anderson-darling, and Lilliefors (Kolmogorov-Smirnov) tests of normality
             resid_pvals[4,] <- c(normtest(rqrM_up[,1], 's4_M_pval'),
                                  normtest(rqrS_up, 's4_S_pval'),
-                                 normtest(rqrO_up, 's4_O_pval'))
+                                 if(length(rqrO_up) == 1) rep(rqrO_up, length(resid_pvals[4,])) else normtest(rqrO_up, 's4_O_pval'))
          }
          
          # stuff to return
@@ -291,7 +321,7 @@ simulation_function_N = function(n_sites = 50, # number of sites
                                                        x = Sys.time())),
                                          paste(Sys.info()[['nodename']], Sys.getpid(), sep='_'),
                                          '.RDS')))
-         # Choose a return value in case of error
+         # Choose a return value in case of warning
          return(res2)
       }
    )

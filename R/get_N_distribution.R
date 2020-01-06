@@ -24,6 +24,10 @@ get_N_distribution <- function(lambda_est,
                                if_distance__sigma_est = NA,
                                if_distance__W = NA,
                                if_distance__y_list = NA){
+   
+   # I don't think this is quite specific enough for the problem I'm getting. I think I'd need to specify no data at a site. 
+   if(sum(n_obs) == 0) stop('There is no data. Cannot estimate N distribution.')
+   
    # shorten some names
    sigma_est <- if_distance__sigma_est
    W <- if_distance__W
@@ -119,13 +123,20 @@ get_N_distribution <- function(lambda_est,
    # generating NA's. I tried to get around that by replacing them with 0's, but the problem 
    # then becomes that some sites end up with 0 probability of ALL possible N values. 
    # For those rows I'll just replace the 0's with the site that has the closest to 100% chance 
-   # of having 0 individuals
+   # of having 0 individuals. If there's still a problem, I'll replace those rows with the average
+   # overall all rows. This will make the residuals kinda funky, but they're already a little funky. 
    if(any(rowSums(post)==0)){
       # rows with all 0's
       badrows <- which(rowSums(post)==0)
       # row with lowest positive probability of having 1
       lowestrow <- which(post[,2,] == min(post[ (post[,2,] > 0) ,2,]))[1]
-      post[badrows,,] <- post[lowestrow,,]
+      if ( is.infinite(lowestrow) ) {
+         # if there's still a problem with the estimated probability distribution of N, just replace the row with the average of all the others
+         colmeans <- colSums(x = post, na.rm=T) / nrow(post)
+         post[badrows,,] <- colmeans
+         # 100% probability of 0 sightings
+         # post[badrows,,] <- c(1, rep(0, length(post[1,,])-1))
+      } else post[badrows,,] <- post[lowestrow,,]
    }
       return(post)
 }
