@@ -1,0 +1,14 @@
+Package: nmmsims
+Type: Package
+Title: Simulate & Analyze N-mixture Model Data
+Version: 1.0
+Date: 2019-12-06
+Author: Philip Shirk
+Maintainer: Philip Shirk <filups@gmail.com>
+Description: One paragraph description of what the package does as one or more full sentences.
+License: GPL (>= 2)
+Depends: R (>= 3.1.0)
+Imports: Rcpp (>= 1.0.3)
+LinkingTo: Rcpp
+RoxygenNote: 7.0.2
+Encoding: UTF-8
