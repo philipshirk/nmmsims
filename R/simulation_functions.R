@@ -63,7 +63,7 @@ simulation_function_nobs <- factory(base_simulation_function_nobs)
 #' @import tidyverse
 #' 
 #' @export
-base_simulation_function_N
+simulation_function_N <- factory(base_simulation_function_N)
 
 
 
@@ -98,4 +98,4 @@ base_simulation_function_N
 #' @import tidyverse
 #' 
 #' @export
-simulate_function_p <- factory(base_simulate_function_p)
+simulation_function_p <- factory(base_simulation_function_p)
