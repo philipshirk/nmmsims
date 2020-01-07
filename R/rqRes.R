@@ -175,26 +175,32 @@ rqResObs_optim = function(n_obs,
               size = 1,        # choose only a single value
               replace = FALSE) - 1 # subtract 1 so that it includes 0 and doesn't go above K.
 
-   # getP is a function from unmarked
-   # returns a matrix of estimated detection probabilities for each site (rows) and replicate (columns).
-   # p = getP(umFit)
-   # for my simulations, I can just use the same detection prob.
-   if(is.na(p_est) & !is.na(sigma_est)) p_est <- calc_det_prob(W = W, sigma = sigma_est)
-   p = matrix(data = p_est,
-              nrow = nrow(n_obs),
-              ncol = ncol(n_obs))
-
-   # get the residuals
-   res = rqRes(n_obs,
-               pFun = pbinom,
-               # Computes the generalised kronecker product of two arrays, X and Y
-               size = kronecker(X = rN,
-                                Y = t(rep(1, ncol(p)))),
-               prob=p)
-
-   if (any(is.infinite(res)) & show.warnings) {
-      #throw a warning if any residuals are infinite
-      warning(paste(sum(is.infinite(res)), " residuals infinite."))
+   # if get_N_distribution worked, continue
+   if ( !all(is.na(rN)) ) {
+      # getP is a function from unmarked
+      # returns a matrix of estimated detection probabilities for each site (rows) and replicate (columns).
+      # p = getP(umFit)
+      # for my simulations, I can just use the same detection prob.
+      if(is.na(p_est) & !is.na(sigma_est)) p_est <- calc_det_prob(W = W, sigma = sigma_est)
+      p = matrix(data = p_est,
+                 nrow = nrow(n_obs),
+                 ncol = ncol(n_obs))
+      
+      # get the residuals
+      res = rqRes(n_obs,
+                  pFun = pbinom,
+                  # Computes the generalised kronecker product of two arrays, X and Y
+                  size = kronecker(X = rN,
+                                   Y = t(rep(1, ncol(p)))),
+                  prob=p)
+      
+      if (any(is.infinite(res)) & show.warnings) {
+         #throw a warning if any residuals are infinite
+         warning(paste(sum(is.infinite(res)), " residuals infinite."))
+      }
+   } else {
+      # if get_N_distribution did NOT work, then just return NA
+      res <- NA
    }
 
    # return the residuals

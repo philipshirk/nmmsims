@@ -1,5 +1,7 @@
 #' Approximate Posterior Distribution of N
 #'
+#' This function was causing a lot of errors, so I factoried it to prevent 
+#' errors from stopping other things. 
 #' Function for getting an estimate of the posterior distribution of N from my 
 #' optim models. This is from the unmarked::ranef() function: https://github.com/rbchan/unmarked/blob/master/R/ranef.R
 #' and is needed for calculating Observation rq residuals.
@@ -16,7 +18,28 @@
 #' @return PDF of possible counts. Formatted as an array of probabilities with row = site, col = repl, 3rd dim = observations.
 #'
 #' @export
-get_N_distribution <- function(lambda_est, 
+get_N_distribution <- factory(base_get_N_distribution)
+
+
+#' Guts to approximate Posterior Distribution of N
+#'
+#' Function for getting an estimate of the posterior distribution of N from my 
+#' optim models. This is from the unmarked::ranef() function: https://github.com/rbchan/unmarked/blob/master/R/ranef.R
+#' and is needed for calculating Observation rq residuals.
+#'
+#' @param lambda_est estimated lambda value
+#' @param n_obs number observed
+#' @param K maximum N possible (typically obtained from n_obs)
+#' @param p_est detection probability. Given if sampling_method == 'pointcount'. Calculated from if_distance__sigma_est if sampling_method == 'distance'
+#' @param sampling_method either 'pointcount' or 'distance'
+#' @param if_distance__sigma_est Estimated detection parameter, sigma. Only needed if sampling_method == distance
+#' @param if_distance__W Transect half-width. Only needed if sampling_method == distance
+#' @param if_distance__y_list array of distance data with row = site, col = repl, 3rd dim = observations. Only needed if sampling_method == distance
+#'
+#' @return PDF of possible counts. Formatted as an array of probabilities with row = site, col = repl, 3rd dim = observations.
+#'
+#' @export
+base_get_N_distribution <- function(lambda_est, 
                                n_obs, 
                                K=NA, 
                                p_est = NA, 
