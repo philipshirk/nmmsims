@@ -129,14 +129,17 @@ get_N_distribution <- function(lambda_est,
       # rows with all 0's
       badrows <- which(rowSums(post)==0)
       # row with lowest positive probability of having 1
-      lowestrow <- which(post[,2,] == min(post[ (post[,2,] > 0) ,2,]))[1]
-      if ( is.infinite(lowestrow) ) {
-         # if there's still a problem with the estimated probability distribution of N, just replace the row with the average of all the others
-         colmeans <- colSums(x = post, na.rm=T) / nrow(post)
-         post[badrows,,] <- colmeans
-         # 100% probability of 0 sightings
-         # post[badrows,,] <- c(1, rep(0, length(post[1,,])-1))
-      } else post[badrows,,] <- post[lowestrow,,]
+      # suppressWarnings(
+      #    lowestrow <- which(post[,2,] == min(post[ (post[,2,] > 0) ,2,]))[1]
+      # )
+      # if ( ! is.numeric(lowestrow) ) {
+      # if there's still a problem with the estimated probability distribution of N, just replace
+      # the row with the average of all the others
+      colmeans <- colSums(x = post, na.rm=T) / nrow(post)
+      post[badrows,,] <- colmeans
+      # 100% probability of 0 sightings
+      # post[badrows,,] <- c(1, rep(0, length(post[1,,])-1))
+      # } else post[badrows,,] <- post[lowestrow,,]
    }
       return(post)
 }
