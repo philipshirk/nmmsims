@@ -66,6 +66,7 @@ base_simulation_function_p = function(n_sites = 50, # number of sites
                           return = return,
                           W = W)
       
+      pco <- resL$inputs$include_pc_optim
       # get the results data.frame
       res <- resL[['df']]
       
@@ -132,7 +133,7 @@ base_simulation_function_p = function(n_sites = 50, # number of sites
         }
         
         # residuals for optim & point count sampling
-        {
+        if(pco){
           rqrM_op <- rqResMar_optim(n_obs = simdat$n_obs,
                                     lambda_est = lam_op)
           
@@ -205,9 +206,9 @@ base_simulation_function_p = function(n_sites = 50, # number of sites
                      rqrM_optim_distance  = rqrM_od, 
                      rqrS_optim_distance  = rqrS_od, 
                      rqrO_optim_distance  = rqrO_od,
-                     rqrM_optim_pointcount = rqrM_op, 
-                     rqrS_optim_pointcount = rqrS_op, 
-                     rqrO_optim_pointcount = rqrO_op,
+                     rqrM_optim_pointcount = ifelse(test = pco, yes = rqrM_op, no = NA),
+                     rqrS_optim_pointcount = ifelse(test = pco, yes = rqrS_op, no = NA),
+                     rqrO_optim_pointcount = ifelse(test = pco, yes = rqrO_op, no = NA),
                      rqrM_unmarked_distance  = rqrM_ud, 
                      rqrS_unmarked_distance  = rqrS_ud, 
                      rqrO_unmarked_distance  = rqrO_ud,
@@ -256,9 +257,11 @@ base_simulation_function_p = function(n_sites = 50, # number of sites
                              if(length(rqrO_od)==1) rep(rqrO_od, length(resid_pvals[1,])) else normtest(rqrO_od, 's1_O_pval'))
         
         # shapiro-wilks, anderson-darling, and Lilliefors (Kolmogorov-Smirnov) tests of normality
-        resid_pvals[2,] <- c(normtest(rqrM_op[,1], 's2_M_pval'),
+        if(pco){
+          resid_pvals[2,] <- c(normtest(rqrM_op[,1], 's2_M_pval'),
                              normtest(rqrS_op, 's2_S_pval'),
                              if(length(rqrO_op) == 1) rep(rqrO_op, length(resid_pvals[2,])) else normtest(rqrO_op, 's2_O_pval'))
+        }
         
         # shapiro-wilks, anderson-darling, and Lilliefors (Kolmogorov-Smirnov) tests of normality
         resid_pvals[3,] <- c(normtest(rqrM_ud[,1], 's3_M_pval'),
@@ -269,6 +272,9 @@ base_simulation_function_p = function(n_sites = 50, # number of sites
         resid_pvals[4,] <- c(normtest(rqrM_up[,1], 's4_M_pval'),
                              normtest(rqrS_up, 's4_S_pval'),
                              if(length(rqrO_up) == 1) rep(rqrO_up, length(resid_pvals[4,])) else normtest(rqrO_up, 's4_O_pval'))
+        
+        # remove the point-count optim p-values if that analysis method isn't in use.
+        if(! pco) resid_pvals <- resid_pvals[-2,]
       }
       
       # stuff to return
