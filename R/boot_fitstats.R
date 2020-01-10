@@ -61,6 +61,7 @@ boot_fitstats <- function(n_sites,
          # is.na(newd) <- is.na(obs)
          
          # re-fit the model with the simulated dataset
+         
          ad <- analyse_data(simulated_data = nd, 
                             reps_to_analyze = n_samps, 
                             sampling_method = sampling_method, 

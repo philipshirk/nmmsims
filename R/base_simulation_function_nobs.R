@@ -28,6 +28,7 @@
 #' base_simulation_function_nobs()
 #'
 #' @import tidyverse
+#' @import nortest
 #' 
 #' @export
 base_simulation_function_nobs = function(n_sites = 50, # number of sites

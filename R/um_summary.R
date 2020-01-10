@@ -13,8 +13,8 @@
 #' @export
 um_summary <- function(object){
    t.star <- object@t.star
-   t0 <- object@t0
-   nsim <- nrow(t.star)
+   t0     <- object@t0
+   nsim   <- nrow(t.star)
    biasMat <- pMat <- matrix(NA, nsim, length(t0))
    for(i in 1:nsim) {
       biasMat[i,] <- t0 - t.star[i,]

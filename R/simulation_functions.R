@@ -28,6 +28,7 @@
 #' simulation_function_nobs()
 #'
 #' @import tidyverse
+#' @import nortest
 #' 
 #' @export
 simulation_function_nobs <- factory(base_simulation_function_nobs)
@@ -61,6 +62,7 @@ simulation_function_nobs <- factory(base_simulation_function_nobs)
 #' simulation_function_N()
 #'
 #' @import tidyverse
+#' @import nortest
 #' 
 #' @export
 simulation_function_N <- factory(base_simulation_function_N)
@@ -96,6 +98,7 @@ simulation_function_N <- factory(base_simulation_function_N)
 #' simulation_function_p()
 #'
 #' @import tidyverse
+#' @import nortest
 #' 
 #' @export
 simulation_function_p <- factory(base_simulation_function_p)

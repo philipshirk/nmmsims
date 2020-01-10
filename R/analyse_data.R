@@ -28,6 +28,7 @@ analyse_data <- function(simulated_data,
                          reps_to_analyze = c(3,6), # analyze the first 3 pointcount, or all 6?
                          sampling_method = c('distance', 'pointcount'), # use distance sampling, or repeat counts?
                          analysis_method = c('optim', 'unmarked'), # analyze using optim, or unmarked?
+                         include_pc_optim = FALSE,
                          simulate_gof_pvals = FALSE,
                          simulate_gof_sims = 5,
                          simulate_gof_parallel = FALSE,
@@ -157,6 +158,11 @@ analyse_data <- function(simulated_data,
       
       if(any(!is.na(match(x = tolower(sampling_method), 
                           table = c('dist', 'distance', 'distancesamp', 'distance sampling'))))){
+         # might be able to speed things up slightly by 
+         # splitting off a GOF version of this analysis function
+         # and paring it down to optimize for GOF
+         # sig_start = ifelse(test = )
+         
          # if distance_sampling, sigma = sd of normal, else detection probability
          opt_out <- optim(par  = c(sigma = log(5), lambda = log(max(nmat))),
                           fn    = nll,
@@ -238,9 +244,9 @@ analyse_data <- function(simulated_data,
          }
       }
       
-      if(any(!is.na(match(x = tolower(sampling_method), 
+      if(include_pc_optim & any(!is.na(match(x = tolower(sampling_method),
                           table = c('pc', 'pointcount', 'point count', 'point', 'counts'))))){
-         
+
          opt_out <- optim(par  = c(sigma = log(0.5 / (1 - 0.5)), lambda = log(max(nmat))),
                           fn    = nll,
                           K     = K,
@@ -248,37 +254,37 @@ analyse_data <- function(simulated_data,
                           W     = W,
                           y_dat = y,
                           distance_sampling = FALSE)
-         
+
          # exp(opt_out$par)
-         
+
          # Model fit
          {
-            gof_obs  <- fitstats_optim(optim_out = opt_out, 
-                                       n_obs = nmat, 
-                                       W = W, 
+            gof_obs  <- fitstats_optim(optim_out = opt_out,
+                                       n_obs = nmat,
+                                       W = W,
                                        sampling_method = 'pointcount')
          }
-         
+
          # if only looking for gof, stop here
          if(! ('results' %in% return)){
             out$optim$pointcount <- gof_obs
          } else {
             # if simulating gof...
             if(simulate_gof_pvals){
-               fit_sims <- boot_fitstats(n_sites = n_sites, 
-                                         n_samps = n_samps, 
-                                         lambda  = exp(opt_out$par['lambda']), 
-                                         sigma   = 1 / (1 + exp(-opt_out$par['sigma'])), 
-                                         det_prob = 1 / (1 + exp(-opt_out$par['sigma'])), 
-                                         sampling_method = 'pointcount', 
-                                         W = W, 
-                                         nsim = simulate_gof_sims, 
+               fit_sims <- boot_fitstats(n_sites = n_sites,
+                                         n_samps = n_samps,
+                                         lambda  = exp(opt_out$par['lambda']),
+                                         sigma   = 1 / (1 + exp(-opt_out$par['sigma'])),
+                                         det_prob = 1 / (1 + exp(-opt_out$par['sigma'])),
+                                         sampling_method = 'pointcount',
+                                         W = W,
+                                         nsim = simulate_gof_sims,
                                          # progress_bar = FALSE,
                                          parallel = simulate_gof_parallel)
-               
+
                gof_pvals_r <- opt_summary(fit_data = gof_obs, fit_sims = fit_sims)
             }
-            
+
             # format estimates in a dataframe
             {
                out.optimr <- data.frame(LL_method = 'optim',
@@ -303,11 +309,11 @@ analyse_data <- function(simulated_data,
                                         # rqres_obs      = NA,
                                         # c_hat_marginal = NA,
                                         # c_hat_sitesum  = NA,
-                                        det_p_est = NA) %>% 
+                                        det_p_est = NA) %>%
                   mutate(det_p_est  = sigma_est,
                          lambda_CV = NA,
                          sigma_CV  = NA)
-               
+
                out <- rbind(out, out.optimr)
             }
          }

@@ -26,6 +26,7 @@
 #' base_simulation_function_N()
 #'
 #' @import tidyverse
+#' @import nortest
 #' 
 #' @export
 base_simulation_function_N = function(n_sites = 50, # number of sites
