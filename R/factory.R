@@ -62,12 +62,13 @@ factory <- function (fun) {
   }
 }
 
-#' an internal helper function for "factory()" function
+#' an internal helper function for "factory()" function. It checks to see if a particular attribute is present
 #' @export
 #' @param x The result returned by the factory function
 #' @param what the attribute to return from the result returned by the factory function
 #' @return logical
 .has <- function(x, what) {
+  # check to make sure that attributes are present
   !is.null(attr(x,what))
 }
 

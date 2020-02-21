@@ -10,12 +10,13 @@ Rcpp::compileAttributes()
 
 # create documentation
 devtools::document()
-
+# build the library
 devtools::build(path = 'G:/My Drive/Sharing')
 
 # install the package
 devtools::install(dependencies=TRUE)
 
+# load the library into session
 library('nmmsims')
 # nmmsims::
 

@@ -28,14 +28,15 @@ analyse_data <- function(simulated_data,
                          reps_to_analyze = c(3,6), # analyze the first 3 pointcount, or all 6?
                          sampling_method = c('distance', 'pointcount'), # use distance sampling, or repeat counts?
                          analysis_method = c('optim', 'unmarked'), # analyze using optim, or unmarked?
-                         include_pc_optim = FALSE,
-                         simulate_gof_pvals = FALSE,
-                         simulate_gof_sims = 5,
-                         simulate_gof_parallel = FALSE,
+                         include_pc_optim = FALSE, # include an optim version of point count analysis? This just takes longer than using unmarked
+                         simulate_gof_pvals = FALSE, # whether or not to simulate GOF p-values. This takes a long time!
+                         simulate_gof_sims = 5, # the number of simulations to use for simulating p-values (recommend 1000+)
+                         simulate_gof_parallel = FALSE, # This can be run in parallel IFF the whole function isn't already being run in parallel at a higher level
                          W = 20, # transect half-width
                          return = 'results'){
    require(tidyverse)
    
+   # create a list of imports to make export easier later
    inputs = list(reps_to_analyze = reps_to_analyze,
                  sampling_method = sampling_method,
                  analysis_method =analysis_method,

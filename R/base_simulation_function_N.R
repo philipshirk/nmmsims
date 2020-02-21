@@ -35,8 +35,8 @@ base_simulation_function_N = function(n_sites = 50, # number of sites
                                lambda2 = 5, 
                                det_prob = 0.42, # mean detection probability
                                sigma   = NA, # detection parameter, calculated from det_prob
-                               W = 20,
-                               reps_to_analyze = 3, 
+                               W = 20,          # transect half-width
+                               reps_to_analyze = 3, # number of replicate surveys at each location/site
                                # sampling_method = c('distance'),
                                # analysis_method = c('optim'),
                                # simulate_gof_pvals = T, 
@@ -44,10 +44,10 @@ base_simulation_function_N = function(n_sites = 50, # number of sites
                                # simulate_gof_parallel = T, 
                                return = 'results',
                                savefilename = file.path('set 1', 'datasets', 'data')) {
-   
+   # wrap everything in a tryCatch call
    out <- tryCatch(
       {
-         # simulate the data
+         # simulate new data
          simdat <- sim_data_N(n_sites = n_sites, 
                               n_samps = n_samps, 
                               lambda1 = lambda1, 
@@ -56,7 +56,7 @@ base_simulation_function_N = function(n_sites = 50, # number of sites
                               sigma = sigma, 
                               W = W)
          
-         # analyze the data
+         # analyze the simulated data
          resL <- analyse_data(simulated_data = simdat, 
                               reps_to_analyze = reps_to_analyze, 
                               sampling_method = c('distance', 'pointcount'),

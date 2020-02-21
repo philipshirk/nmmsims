@@ -39,18 +39,20 @@ base_simulation_function_nobs = function(n_sites = 50, # number of sites
                                     beta    = NA,    # probability of being observed ONCE (beta = 1 - alpha - gamma)
                                     det_prob = NA,   # mean detection probability
                                     sigma   = NA,    # detection parameter, calculated from det_prob
-                                    W = 20,
-                                    reps_to_analyze = 3, 
+                                    W = 20,          # transect half-width
+                                    reps_to_analyze = 3, # number of replicate surveys at each location/site
                                     # sampling_method = c('distance'), # , 'pointcount'
                                     # analysis_method = c('optim'), # , 'unmarked'
                                     # simulate_gof_pvals = T, 
                                     # simulate_gof_sims = 5,
                                     # simulate_gof_parallel = T, 
-                                    return = 'results',
+                                    return = 'results', # return the full results
                                     savefilename = file.path('set 1', 'datasets', 'data')) {
   
+  # wrap everything in a tryCatch argument
   out <- tryCatch(
     {
+      # check a few basic parameters before proceeding
       if(is.na(beta)) beta <- 1 - alpha - gamma
       if(is.na(det_prob)) det_prob = gamma + beta
       if( round(alpha + beta + gamma, 3) != 1.000) stop('The parameters alpha, beta, and gamma must add to 1.')

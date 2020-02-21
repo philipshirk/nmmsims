@@ -35,10 +35,10 @@ base_simulation_function_p = function(n_sites = 50, # number of sites
                                  lambda  = 10, # mean abundance at every site 
                                  mean_det_prob = 0.42, # mean detection probability
                                  sigma_beta_dist_p = 0.01, # sigma on a beta distribution for the realized detection parameter
-                                 alpha = NA,
+                                 alpha = NA,      # could specify alpha and beta (beta distribution parameters) directly, but I'll calculate them instead
                                  beta = NA,
-                                 W = 20,
-                                 reps_to_analyze = 3, 
+                                 W = 20,          # transect half-width
+                                 reps_to_analyze = 3, # number of replicate surveys at each location/site
                                  #sampling_method = c('distance'), # , 'pointcount'
                                  #analysis_method = c('optim'), # , 'unmarked'
                                  #simulate_gof_pvals = T, 
@@ -46,7 +46,7 @@ base_simulation_function_p = function(n_sites = 50, # number of sites
                                  #simulate_gof_parallel = F, 
                                  return = 'results',
                                  savefilename = file.path('set 1', 'datasets', 'data')) {
-  
+  # wrap the whole thing in a tryCatch call
   out <- tryCatch(
     {
       simdat <- sim_data_p(n_sites = n_sites,

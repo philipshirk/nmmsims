@@ -4,8 +4,8 @@ Title: Simulate & Analyze N-mixture Model Data
 Version: 1.0
 Date: 2019-12-06
 Author: Philip Shirk
-Maintainer: Philip Shirk <filups@gmail.com>
-Description: One paragraph description of what the package does as one or more full sentences.
+Maintainer: Philip Shirk <philip.shirk@gmail.com>
+Description: A package to aid in the simulation and analysis of N-mixture models (both with and without distance information).
 License: GPL (>= 2)
 Depends: R (>= 3.1.0)
 Imports: Rcpp (>= 1.0.3)
