@@ -1,6 +1,5 @@
 useDynLib(nmmsims, .registration=TRUE)
 exportPattern("^[[:alpha:]]+")
-import(dplyr)
 import(parallel)
 import(tidyverse)
 import(unmarked)
